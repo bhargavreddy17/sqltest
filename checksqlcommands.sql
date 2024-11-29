@@ -6,3 +6,6 @@ ALTER
 DROP
 ADD
 DELETE
+
+
+ADD
