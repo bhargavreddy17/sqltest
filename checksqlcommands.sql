@@ -1,1 +1,3 @@
 alter
+ALTER
+DELETE
