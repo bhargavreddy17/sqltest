@@ -1,3 +1,4 @@
-alter
-delete
-drop
+ALTER
+DELETE
+DROP
+ADD
