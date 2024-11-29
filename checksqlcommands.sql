@@ -1,4 +1,1 @@
-ALTER
-DELETE
-DROP
-ADD
+alter
