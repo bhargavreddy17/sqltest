@@ -48,7 +48,7 @@ jobs:
         if: steps.check_sql.outputs.commands_found == 'true'
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: smtp.office365.com
+          server_address: smtp.gmail.com
           server_port: 587
           username: githubactions
           password: duhmeahtveffxded
