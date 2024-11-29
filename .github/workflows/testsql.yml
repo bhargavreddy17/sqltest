@@ -14,14 +14,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Fetch all branches and main
+      - name: Fetch all branches
         run: |
           git fetch --all
-          git fetch origin main
 
       - name: Get list of changed SQL files
         run: |
-          git diff --name-only origin/main...${{ github.head_ref }} > changed_files.txt
+          # Use the dynamic GitHub context variables for comparing branches
+          echo "Comparing branches: ${GITHUB_BASE_REF}...${GITHUB_HEAD_REF}"
+          git diff --name-only origin/${{ github.base_ref }}...origin/${{ github.head_ref }} > changed_files.txt
           cat changed_files.txt
 
       - name: Check for ALTER or UPDATE commands in SQL files
