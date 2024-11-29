@@ -1,0 +1,4 @@
+delete
+alter
+drop
+add
