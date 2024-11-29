@@ -27,13 +27,14 @@ jobs:
 
       - name: Check for ALTER or UPDATE commands in SQL files
         run: |
-          altered_found=false
+          commands_found=false
           while IFS= read -r file; do
             if [[ "$file" == *.sql ]]; then
               echo "Checking file: $file"
               if grep -q -E 'UPDATE|ALTER' "$file"; then
                 echo "Detected UPDATE or ALTER command in $file"
-                altered_found=true
+                commands_found=true
+                message+="Detected UPDATE, ALTER, DROP, or ADD in $file\n"
               fi
             fi
           done < changed_files.txt
@@ -42,3 +43,28 @@ jobs:
             echo "Error: ALTER or UPDATE command detected in .sql file(s)."
             exit 1
           fi
+
+      - name: Send email notification
+        if: steps.check_sql.outputs.commands_found == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.office365.com
+          server_port: 587
+          username: githubactions
+          password: duhmeahtveffxded
+          subject: |
+            SQL Command Alert: ALTER/UPDATE/DROP/ADD Detected in PR #${{ github.event.pull_request.number }}
+          to: "outlook-group@example.com"
+          body: |
+            Hello,
+
+            The following SQL files contain ALTER, UPDATE, DROP, or ADD commands:
+
+            ${{ steps.check_sql.outputs.alert_message }}
+
+            **PR Details**:
+            - PR Number: #${{ github.event.pull_request.number }}
+            - PR Title: ${{ github.event.pull_request.title }}
+            - PR Link: ${{ github.event.pull_request.html_url }}
+
+           
