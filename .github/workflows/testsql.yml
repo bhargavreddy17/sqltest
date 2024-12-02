@@ -51,8 +51,8 @@ jobs:
           repo: sqltest
           title: "Notification to Team"
           body: "This issue is to notify the team @org/team-name about the recent changes."
-        env:
-          GITHUB_TOKEN: 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
+        # env:
+        #   GITHUB_TOKEN: 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
 
       # - name: Send email notification
       #   if: steps.check_sql.outputs.commands_found == 'true'
