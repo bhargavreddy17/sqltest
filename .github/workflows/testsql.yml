@@ -43,7 +43,7 @@ jobs:
             echo "Error: ALTER or UPDATE command detected in .sql file(s)."
           fi
 
-     steps:
+    steps:
       - name: Checkout repository
         uses: actions/checkout@v3
  
