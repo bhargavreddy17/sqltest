@@ -58,8 +58,5 @@ jobs:
 
             - **PR Title**: ${{ github.event.pull_request.title }}
             - **PR URL**: ${{ github.event.pull_request.html_url }}
-
-            Detected SQL command changes:
-            ${{ env.alert_message }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
