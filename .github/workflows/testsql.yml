@@ -54,7 +54,6 @@ jobs:
           # body: "This issue is to notify the team @org/team-name about the recent changes."
           body: |
             This issue is to notify the team @org/team-name about the recent changes.
-
             **PR Details:**
             - **PR Number**: #${{ github.event.pull_request.number }}
             - **PR Title**: ${{ github.event.pull_request.title }}
