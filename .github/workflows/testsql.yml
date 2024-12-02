@@ -20,25 +20,51 @@ jobs:
 
       - name: Get list of changed SQL files
         run: |
-          # Use the dynamic GitHub context variables for comparing branches
           echo "Comparing branches: ${GITHUB_BASE_REF}...${GITHUB_HEAD_REF}"
           git diff --name-only origin/${{ github.base_ref }}...origin/${{ github.head_ref }} > changed_files.txt
           cat changed_files.txt
 
-      - name: Check for ALTER or UPDATE commands in SQL files
+      - name: Check for ALTER or UPDATE or DROP or ADD commands in SQL files
+        id: check_sql
         run: |
-          altered_found=false
+          commands_found=false
+          message=""
           while IFS= read -r file; do
             if [[ "$file" == *.sql ]]; then
               echo "Checking file: $file"
-              if grep -q -E 'UPDATE|ALTER' "$file"; then
-                echo "Detected UPDATE or ALTER command in $file"
-                altered_found=true
+              if grep -q -E 'UPDATE|ALTER|DROP|ADD|DELETE' "$file"; then
+                echo "Detected UPDATE or ALTER or DELETE or DROP OR ADD command in $file"
+                commands_found=true
+                message+="Detected UPDATE, ALTER, DELETE, DROP, or ADD in $file\n"
               fi
             fi
           done < changed_files.txt
 
-          if [ "$altered_found" = true ]; then
-            echo "Error: ALTER or UPDATE command detected in .sql file(s)."
-            exit 1
-          fi
+          # Writing output to environment file instead of using deprecated set-output
+          echo "commands_found=$commands_found" >> $GITHUB_ENV
+          echo "alert_message=$message" >> $GITHUB_ENV
+      - name: Exit early if no commands found
+        if: ${{ env.commands_found == 'false' }}
+        run: |
+          echo "No UPDATE, ALTER, DELETE, DROP, or ADD commands detected. Exiting."
+          exit 0
+
+
+      - name: Create GitHub Issue
+        if: ${{ env.commands_found == 'true' }}  
+        uses: octokit/request-action@v2.x
+        with:
+          route: POST /repos/bhargavreddy17/sqltest/issues
+          owner: bhargavreddy17
+          repo: sqltest
+          title: "Notification to Team"
+          body: |
+            "This issue is to notify the team about the recent changes:
+
+            - **PR Title**: ${{ github.event.pull_request.title }}
+            - **PR URL**: ${{ github.event.pull_request.html_url }}
+            - **PR Number**: #${{github.event.pull_request.number }}
+            - **Detected SQL Commands**:
+              ${{ env.alert_message }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

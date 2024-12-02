@@ -22,7 +22,9 @@ ALTER
 ADD
 DROP
 
+
 SELECT
 
 
 DELETE
+
