@@ -41,30 +41,44 @@ jobs:
 
           if [ "$altered_found" = true ]; then
             echo "Error: ALTER or UPDATE command detected in .sql file(s)."
-            exit 1
           fi
 
-      - name: Send email notification
-        if: steps.check_sql.outputs.commands_found == 'true'
-        uses: dawidd6/action-send-mail@v3
+     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+ 
+      - name: Create GitHub Issue
+        uses: octokit/request-action@v2.x
         with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: kallubhargavreddy@gmail.com
-          password: duhmeahtveffxded
-          subject: |
-            SQL Command Alert: ALTER/UPDATE/DROP/ADD Detected in PR #${{ github.event.pull_request.number }}
-          to: "kallubhargavreddy@gmail.com"
-          body: |
-            Hello,
+          route: POST /repos/bhargavreddy17/sqltest/issues
+          owner: bhargavreddy17
+          repo: sqltest
+          title: "Notification to Team"
+          body: "This issue is to notify the team @org/team-name about the recent changes."
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}ALTER
 
-            The following SQL files contain ALTER, UPDATE, DROP, or ADD commands:
+      # - name: Send email notification
+      #   if: steps.check_sql.outputs.commands_found == 'true'
+      #   uses: dawidd6/action-send-mail@v3
+      #   with:
+      #     server_address: smtp.gmail.com
+      #     server_port: 587
+      #     username: kallubhargavreddy@gmail.com
+      #     password: duhmeahtveffxded
+      #     subject: |
+      #       SQL Command Alert: ALTER/UPDATE/DROP/ADD Detected in PR #${{ github.event.pull_request.number }}
+      #     to: "kallubhargavreddy@gmail.com"
+      #     body: |
+      #       Hello,
 
-            ${{ steps.check_sql.outputs.alert_message }}
+      #       The following SQL files contain ALTER, UPDATE, DROP, or ADD commands:
 
-            **PR Details**:
-            - PR Number: #${{ github.event.pull_request.number }}
-            - PR Title: ${{ github.event.pull_request.title }}
-            - PR Link: ${{ github.event.pull_request.html_url }}
+      #       ${{ steps.check_sql.outputs.alert_message }}
+
+      #       **PR Details**:
+      #       - PR Number: #${{ github.event.pull_request.number }}
+      #       - PR Title: ${{ github.event.pull_request.title }}
+      #       - PR Link: ${{ github.event.pull_request.html_url }}
 
            
