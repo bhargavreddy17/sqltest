@@ -51,10 +51,7 @@ jobs:
           owner: bhargavreddy17
           repo: sqltest
           title: "Notification to Team"
-          body: |
-            This issue is to notify the team about the recent changes.
-            PR Details: |
-            - PR Title: ${{ github.event.pull_request.title }}
-            - PR Link: ${{ github.event.pull_request.html_url }}
+          body: "This issue is to notify the team about the recent changes. PR Details: - PR Title: ${{ github.event.pull_request.title }} - PR Link: ${{ github.event.pull_request.html_url }}"
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
