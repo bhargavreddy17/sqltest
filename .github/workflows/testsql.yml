@@ -26,8 +26,10 @@ jobs:
           cat changed_files.txt
 
       - name: Check for ALTER or UPDATE commands in SQL files
+        id: check_sql
         run: |
           commands_found=false
+          message=""
           while IFS= read -r file; do
             if [[ "$file" == *.sql ]]; then
               echo "Checking file: $file"
@@ -38,13 +40,10 @@ jobs:
               fi
             fi
           done < changed_files.txt
+
           echo "::set-output name=commands_found::$commands_found"
           echo "::set-output name=alert_message::$message"
 
-          # if [ "$commands_found" = true ]; then
-          #   echo "Error: ALTER or UPDATE command detected in .sql file(s)."
-          # fi
- 
       - name: Create GitHub Issue
         uses: octokit/request-action@v2.x
         with:
@@ -52,39 +51,15 @@ jobs:
           owner: bhargavreddy17
           repo: sqltest
           title: "Notification to Team"
-          body: >
+          body: |
             This issue is to notify the team @org/team-name about the recent changes.
-
+            
             **PR Details:**
             - **PR Number**: #${{ github.event.pull_request.number }}
             - **PR Title**: ${{ github.event.pull_request.title }}
             - **PR Link**: ${{ github.event.pull_request.html_url }}
-            Detected SQL command changes in the PR:  
+
+            Detected SQL command changes in the PR:
             ${{ steps.check_sql.outputs.alert_message }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
-
-      # - name: Send email notification
-      #   if: steps.check_sql.outputs.commands_found == 'true'
-      #   uses: dawidd6/action-send-mail@v3
-      #   with:
-      #     server_address: smtp.gmail.com
-      #     server_port: 587
-      #     username: kallubhargavreddy@gmail.com
-      #     password: duhmeahtveffxded
-      #     subject: |
-      #       SQL Command Alert: ALTER/UPDATE/DROP/ADD Detected in PR #${{ github.event.pull_request.number }}
-      #     to: "kallubhargavreddy@gmail.com"
-      #     body: |
-      #       Hello,
-
-      #       The following SQL files contain ALTER, UPDATE, DROP, or ADD commands:
-
-      #       ${{ steps.check_sql.outputs.alert_message }}
-
-      #       **PR Details**:
-      #       - PR Number: #${{ github.event.pull_request.number }}
-      #       - PR Title: ${{ github.event.pull_request.title }}
-      #       - PR Link: ${{ github.event.pull_request.html_url }}
-
-           
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
