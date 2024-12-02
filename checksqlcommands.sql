@@ -23,3 +23,6 @@ ADD
 DROP
 
 SELECT
+
+
+DELETE
