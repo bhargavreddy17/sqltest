@@ -1,2 +1,3 @@
 
 UPDATE
+DELETE
