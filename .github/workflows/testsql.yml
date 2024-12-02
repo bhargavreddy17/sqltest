@@ -38,10 +38,12 @@ jobs:
               fi
             fi
           done < changed_files.txt
+          echo "::set-output name=commands_found::$commands_found"
+          echo "::set-output name=alert_message::$message"
 
-          if [ "$altered_found" = true ]; then
-            echo "Error: ALTER or UPDATE command detected in .sql file(s)."
-          fi
+          # if [ "$commands_found" = true ]; then
+          #   echo "Error: ALTER or UPDATE command detected in .sql file(s)."
+          # fi
  
       - name: Create GitHub Issue
         uses: octokit/request-action@v2.x
