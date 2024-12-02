@@ -58,7 +58,7 @@ jobs:
             - **PR Number**: #${{ github.event.pull_request.number }}
             - **PR Title**: ${{ github.event.pull_request.title }}
             - **PR Link**: ${{ github.event.pull_request.html_url }}
-
+            
             Detected SQL command changes in the PR:
             ${{ steps.check_sql.outputs.alert_message }}
         env:
