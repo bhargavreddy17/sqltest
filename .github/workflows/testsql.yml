@@ -41,11 +41,12 @@ jobs:
             fi
           done < changed_files.txt
 
-          echo "::set-output name=commands_found::$commands_found"
-          echo "::set-output name=alert_message::$message"
+          # Writing output to environment file instead of using deprecated set-output
+          echo "commands_found=$commands_found" >> $GITHUB_ENV
+          echo "alert_message=$message" >> $GITHUB_ENV
 
       - name: Create GitHub Issue
-        if: steps.check_sql.outputs.commands_found == 'true' 
+        if: ${{ env.commands_found == 'true' }}  # Using environment variable for condition
         uses: octokit/request-action@v2.x
         with:
           route: POST /repos/bhargavreddy17/sqltest/issues
@@ -59,6 +60,6 @@ jobs:
             - **PR URL**: ${{ github.event.pull_request.html_url }}
 
             Detected SQL command changes:
-            ${{ steps.check_sql.outputs.alert_message }}
+            ${{ env.alert_message }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
