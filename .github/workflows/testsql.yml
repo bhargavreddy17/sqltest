@@ -43,6 +43,12 @@ jobs:
           # Writing output to environment file instead of using deprecated set-output
           echo "commands_found=$commands_found" >> $GITHUB_ENV
           echo "alert_message=$message" >> $GITHUB_ENV
+      - name: Exit early if no commands found
+        if: ${{ env.commands_found == 'false' }}
+        run: |
+          echo "No UPDATE, ALTER, DELETE, DROP, or ADD commands detected. Exiting."
+          exit 0
+
 
       - name: Create GitHub Issue
         if: ${{ env.commands_found == 'true' }}  
