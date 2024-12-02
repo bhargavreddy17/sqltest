@@ -52,7 +52,7 @@ jobs:
           owner: bhargavreddy17
           repo: sqltest
           title: "Notification to Team"
-          body: |
+          body: >
             This issue is to notify the team @org/team-name about the recent changes.
 
             **PR Details:**
