@@ -63,6 +63,7 @@ jobs:
 
             - **PR Title**: ${{ github.event.pull_request.title }}
             - **PR URL**: ${{ github.event.pull_request.html_url }}
+            - **PR Number**: #${{github.event.pull_request.number }}
             - **Detected SQL Commands**:
               ${{ env.alert_message }}"
         env:
