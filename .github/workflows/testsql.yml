@@ -53,6 +53,7 @@ jobs:
           title: "Notification to Team"
           body: |
             This issue is to notify the team about the recent changes.
+            
             PR Details:
             - PR Number: #${{ github.event.pull_request.number }}
             - PR Title: ${{ github.event.pull_request.title }}
