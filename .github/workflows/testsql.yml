@@ -42,10 +42,6 @@ jobs:
           if [ "$altered_found" = true ]; then
             echo "Error: ALTER or UPDATE command detected in .sql file(s)."
           fi
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
  
       - name: Create GitHub Issue
         uses: octokit/request-action@v2.x
