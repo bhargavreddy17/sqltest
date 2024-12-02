@@ -24,7 +24,7 @@ jobs:
           git diff --name-only origin/${{ github.base_ref }}...origin/${{ github.head_ref }} > changed_files.txt
           cat changed_files.txt
 
-      - name: Check for ALTER or UPDATE commands in SQL files
+      - name: Check for ALTER or UPDATE or DROP or ADD commands in SQL files
         id: check_sql
         run: |
           commands_found=false
@@ -32,7 +32,7 @@ jobs:
           while IFS= read -r file; do
             if [[ "$file" == *.sql ]]; then
               echo "Checking file: $file"
-              if grep -q -E 'UPDATE|ALTER' "$file"; then
+              if grep -q -E 'UPDATE|ALTER|DROP|ADD|DELETE' "$file"; then
                 echo "Detected UPDATE or ALTER or DELETE or DROP OR ADD command in $file"
                 commands_found=true
                 message+="Detected UPDATE, ALTER, DELETE, DROP, or ADD in $file\n"
