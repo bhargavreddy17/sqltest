@@ -61,8 +61,8 @@ jobs:
             - **PR Number**: #${{ github.event.pull_request.number }}
             - **PR Title**: ${{ github.event.pull_request.title }}
             - **PR Link**: ${{ github.event.pull_request.html_url }}
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+# env:
+#   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
