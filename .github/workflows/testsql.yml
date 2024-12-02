@@ -52,7 +52,8 @@ jobs:
           repo: sqltest
           title: "Notification to Team"
           body: |
-            This issue is to notify the team about the recent changes,
+            This issue is to notify the team about the recent changes.
+  
             PR Number: ${{ github.event.pull_request.number }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
