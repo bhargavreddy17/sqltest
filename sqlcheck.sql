@@ -4,3 +4,5 @@ drop
 add
 DELETE
 ALTER
+DELETE
+ALTER
