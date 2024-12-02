@@ -46,17 +46,13 @@ jobs:
           echo "alert_message=$message" >> $GITHUB_ENV
 
       - name: Create GitHub Issue
-        if: ${{ env.commands_found == 'true' }}  # Using environment variable for condition
+        if: ${{ env.commands_found == 'true' }} 
         uses: octokit/request-action@v2.x
         with:
           route: POST /repos/bhargavreddy17/sqltest/issues
           owner: bhargavreddy17
           repo: sqltest
           title: "Notification to Team"
-          body: |
-            This issue is to notify the team about the recent changes:
-
-            PR Title: ${{ github.event.pull_request.title }}
-            PR URL: ${{ github.event.pull_request.html_url }}
+          body: "This issue is to notify the team about the recent changes:\n\nPR Title: ${{ github.event.pull_request.title }}\nPR URL: ${{ github.event.pull_request.html_url }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
