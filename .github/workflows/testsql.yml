@@ -38,7 +38,8 @@ jobs:
           cat sql_changes.diff
           echo "==========================="
 
-          added_lines=$(grep -E '^\+' sql_changes.diff | grep -v '^\+\+\+' | grep -E 'UPDATE|ALTER|DROP|ADD|DELETE' || true)
+          #added_lines=$(grep -E '^\+' sql_changes.diff | grep -v '^\+\+\+' | grep -E 'UPDATE|ALTER|DROP|ADD|DELETE' || true)
+          added_lines=$(grep -E '^\+' sql_changes.diff | grep -v '^\+\+\+' | grep -E 'UPDATE|ALTER|DROP|ADD|DELETE' | sed '/^\s*$/d' || true)
 
           # Debug: Log the extracted added lines
           echo "==== Added Lines ===="
