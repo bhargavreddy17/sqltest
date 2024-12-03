@@ -38,7 +38,8 @@ jobs:
           echo "==========================="
 
           # Extract added lines and filter for SQL commands
-          added_lines=$(grep -E '^\+' sql_changes.diff | grep -v '^\+\+\+' | sed '/^\s*$/d' || true)
+          added_lines=$(grep -E '^\+' sql_changes.diff | grep -v '^\+\+\+' | sed 's/^+//' || true)
+
 
           # Debug: Log the extracted added lines
           echo "==== Added Lines (Raw) ===="
