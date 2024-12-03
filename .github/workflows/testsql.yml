@@ -1,3 +1,4 @@
+
 name: Check for ALTER or UPDATE commands in SQL files
 
 on:
@@ -24,25 +25,45 @@ jobs:
           git diff --name-only origin/${{ github.base_ref }}...origin/${{ github.head_ref }} > changed_files.txt
           cat changed_files.txt
 
-      - name: Check for ALTER or UPDATE or DROP or ADD commands in SQL files
+      - name: Check for ALTER or UPDATE or DROP or ADD commands in changed lines of SQL files
         id: check_sql
         run: |
           commands_found=false
           message=""
-          while IFS= read -r file; do
-            if [[ "$file" == *.sql ]]; then
-              echo "Checking file: $file"
-              if grep -q -E 'UPDATE|ALTER|DROP|ADD|DELETE' "$file"; then
-                echo "Detected UPDATE or ALTER or DELETE or DROP OR ADD command in $file"
-                commands_found=true
-                message+="Detected UPDATE, ALTER, DELETE, DROP, or ADD in $file\n"
-              fi
-            fi
-          done < changed_files.txt
+          
+          # Get the diff for SQL files and filter added lines (lines starting with '+') for specific commands
+          git diff origin/${{ github.base_ref }}...origin/${{ github.head_ref }} -- '*.sql' > sql_changes.diff
+          added_lines=$(grep -E '^\+' sql_changes.diff | grep -v '^\+\+\+' | grep -E 'UPDATE|ALTER|DROP|ADD|DELETE')
 
-          # Writing output to environment file instead of using deprecated set-output
+          if [[ ! -z "$added_lines" ]]; then
+            commands_found=true
+            message="Detected SQL commands in changed lines:\n$added_lines"
+          fi
+
+          # Write output to environment variables
           echo "commands_found=$commands_found" >> $GITHUB_ENV
-          echo "alert_message=$message" >> $GITHUB_ENV
+          echo -e "alert_message=$message" >> $GITHUB_ENV
+
+
+      # - name: Check for ALTER or UPDATE or DROP or ADD commands in SQL files
+      #   id: check_sql
+      #   run: |
+      #     commands_found=false
+      #     message=""
+      #     while IFS= read -r file; do
+      #       if [[ "$file" == *.sql ]]; then
+      #         echo "Checking file: $file"
+      #         if grep -q -E 'UPDATE|ALTER|DROP|ADD|DELETE' "$file"; then
+      #           echo "Detected UPDATE or ALTER or DELETE or DROP OR ADD command in $file"
+      #           commands_found=true
+      #           message+="Detected UPDATE, ALTER, DELETE, DROP, or ADD in $file\n"
+      #         fi
+      #       fi
+      #     done < changed_files.txt
+
+      #     # Writing output to environment file instead of using deprecated set-output
+      #     echo "commands_found=$commands_found" >> $GITHUB_ENV
+      #     echo "alert_message=$message" >> $GITHUB_ENV
       - name: Exit early if no commands found
         if: ${{ env.commands_found == 'false' }}
         run: |
