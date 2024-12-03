@@ -1,4 +1,4 @@
-name: Check for ALTER or UPDATE commands in SQL files
+name: Detect SQL Commands in PR
 
 on:
   pull_request:
@@ -13,83 +13,65 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
       - name: Fetch all branches
         run: git fetch --all
 
-      - name: Get list of changed SQL files
+      - name: Get changed SQL lines
+        id: diff
         run: |
-          echo "Comparing branches: ${GITHUB_BASE_REF}...${GITHUB_HEAD_REF}"
-          git diff --name-only origin/${{ github.base_ref }}...origin/${{ github.head_ref }} > changed_files.txt
-          cat changed_files.txt
 
-      - name: Check for SQL commands in changed lines of SQL files
-        id: check_sql
-        run: |
-          commands_found=false
-          message=""
-
-          # Get the diff for SQL files and filter added lines for specific commands
           git diff origin/${{ github.base_ref }}...origin/${{ github.head_ref }} -- '*.sql' > sql_changes.diff
 
-          # Debug: Log the diff output
+          # Debug: Display the diff output
           echo "==== SQL Changes Diff ===="
           cat sql_changes.diff
-          echo "==========================="
 
           # Extract added lines and filter for SQL commands
           added_lines=$(grep -E '^\+' sql_changes.diff | grep -v '^\+\+\+' | sed 's/^+//' || true)
 
-
           # Debug: Log the extracted added lines
           echo "==== Added Lines (Raw) ===="
           echo "$added_lines"
-          echo "==========================="
 
-          # Normalize lines and check for SQL commands (case-insensitive)
-          sql_commands=$(echo "$added_lines" | grep -Ei 'UPDATE|ALTER|DROP|ADD|DELETE' || true)
+          # Search for SQL commands
+          sql_commands=$(echo "$added_lines" | grep -Ei '\b(UPDATE|ALTER|DROP|ADD|DELETE)\b' || true)
 
           # Debug: Log matching SQL commands
           echo "==== Matching SQL Commands ===="
           echo "$sql_commands"
-          echo "==============================="
 
+          # Set the output variables for further steps
           if [[ -n "$sql_commands" ]]; then
-            commands_found=true
-            message="Detected SQL commands in changed lines:\n$sql_commands"
+            echo "::set-output name=commands_found::true"
+            echo "::set-output name=alert_message::Detected SQL commands:\n$sql_commands"
           else
-            message="No impactful SQL commands detected."
+            echo "::set-output name=commands_found::false"
+            echo "::set-output name=alert_message::No impactful SQL commands detected."
           fi
 
-          # Write output to environment variables
-          echo "commands_found=$commands_found" >> $GITHUB_ENV
-          echo -e "alert_message=$message" >> $GITHUB_ENV
-
-          # Log environment variables for debugging
-          echo "Commands found: $commands_found"
-          echo -e "Alert message:\n$message"
-
-      - name: Exit early if no commands found
-        if: ${{ env.commands_found == 'false' }}
+      # Exit if no SQL commands are found
+      - name: Exit if no SQL commands found
+        if: steps.diff.outputs.commands_found == 'false'
         run: |
-          echo "No UPDATE, ALTER, DELETE, DROP, or ADD commands detected. Exiting."
+          echo "No SQL commands detected. Exiting."
           exit 0
 
+      # Raise a GitHub issue if SQL commands are found
       - name: Create GitHub Issue
-        if: ${{ env.commands_found == 'true' }}
+        if: steps.diff.outputs.commands_found == 'true'
         uses: octokit/request-action@v2.x
         with:
           route: POST /repos/bhargavreddy17/sqltest/issues
           owner: bhargavreddy17
-          repo: sqltest
-          title: "Notification to Team"
+          title: "SQL Command Detected in PR"
           body: |
-            This issue is to notify the team about the recent changes:
+            "This issue is to notify the team about the recent changes:
 
             - **PR Title**: ${{ github.event.pull_request.title }}
             - **PR URL**: ${{ github.event.pull_request.html_url }}
-            - **PR Number**: #${{ github.event.pull_request.number }}
-            - **Detected SQL Commands**:
-              ${{ env.alert_message }}
+            - **PR Number**: #${{github.event.pull_request.number }}
+
+            The following SQL commands were detected in the changed files:
+            ${{ steps.diff.outputs.alert_message }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
