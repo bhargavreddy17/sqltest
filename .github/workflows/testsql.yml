@@ -30,9 +30,20 @@ jobs:
           commands_found=false
           message=""
 
-          # Get the diff for SQL files and filter added lines (lines starting with '+') for specific commands
+          # Get the diff for SQL files and filter added lines for specific commands
           git diff origin/${{ github.base_ref }}...origin/${{ github.head_ref }} -- '*.sql' > sql_changes.diff
+          
+          # Debug: Log the diff output
+          echo "==== SQL Changes Diff ===="
+          cat sql_changes.diff
+          echo "==========================="
+
           added_lines=$(grep -E '^\+' sql_changes.diff | grep -v '^\+\+\+' | grep -E 'UPDATE|ALTER|DROP|ADD|DELETE' || true)
+
+          # Debug: Log the extracted added lines
+          echo "==== Added Lines ===="
+          echo "$added_lines"
+          echo "====================="
 
           if [[ -n "$added_lines" ]]; then
             commands_found=true
@@ -45,7 +56,7 @@ jobs:
           echo "commands_found=$commands_found" >> $GITHUB_ENV
           echo -e "alert_message=$message" >> $GITHUB_ENV
 
-          # Log output for debugging
+          # Log environment variables for debugging
           echo "Commands found: $commands_found"
           echo -e "Alert message:\n$message"
 
