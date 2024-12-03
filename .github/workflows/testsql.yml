@@ -1,0 +1,121 @@
+
+name: Check for ALTER or UPDATE commands in SQL files
+
+on:
+  pull_request:
+    paths:
+      - '**/*.sql'
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-sql-commands:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Fetch all branches
+        run: git fetch --all
+
+      - name: Get list of changed SQL files
+        run: |
+          echo "Comparing branches: ${GITHUB_BASE_REF}...${GITHUB_HEAD_REF}"
+          git diff --name-only origin/${{ github.base_ref }}...origin/${{ github.head_ref }} > changed_files.txt
+          cat changed_files.txt
+
+      - name: Check for SQL commands in changed lines of SQL files
+        id: check_sql
+        run: |
+          commands_found=false
+          message=""
+
+          # Get the diff for SQL files and filter added lines (lines starting with '+') for specific commands
+          git diff origin/${{ github.base_ref }}...origin/${{ github.head_ref }} -- '*.sql' > sql_changes.diff
+          added_lines=$(grep -E '^\+' sql_changes.diff | grep -v '^\+\+\+' | grep -E 'UPDATE|ALTER|DROP|ADD|DELETE' || true)
+
+          if [[ -n "$added_lines" ]]; then
+            commands_found=true
+            message="Detected SQL commands in changed lines:\n$added_lines"
+          else
+            message="No impactful SQL commands detected."
+          fi
+
+          # Write output to environment variables
+          echo "commands_found=$commands_found" >> $GITHUB_ENV
+          echo -e "alert_message=$message" >> $GITHUB_ENV
+
+          # Log output for debugging
+          echo "Commands found: $commands_found"
+          echo -e "Alert message:\n$message"
+
+      - name: Exit early if no commands found
+        if: ${{ env.commands_found == 'false' }}
+        run: |
+          echo "No UPDATE, ALTER, DELETE, DROP, or ADD commands detected. Exiting."
+          exit 0
+
+      - name: Create GitHub Issue
+        if: ${{ env.commands_found == 'true' }}  
+        uses: octokit/request-action@v2.x
+        with:
+          route: POST /repos/bhargavreddy17/sqltest/issues
+          owner: bhargavreddy17
+          repo: sqltest
+          title: "Notification to Team"
+          body: |
+            "This issue is to notify the team about the recent changes:
+
+            - **PR Title**: ${{ github.event.pull_request.title }}
+            - **PR URL**: ${{ github.event.pull_request.html_url }}
+            - **PR Number**: #${{github.event.pull_request.number }}
+            - **Detected SQL Commands**:
+              ${{ env.alert_message }}."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+      # - name: Check for ALTER or UPDATE or DROP or ADD commands in SQL files
+      #   id: check_sql
+      #   run: |
+      #     commands_found=false
+      #     message=""
+      #     while IFS= read -r file; do
+      #       if [[ "$file" == *.sql ]]; then
+      #         echo "Checking file: $file"
+      #         if grep -q -E 'UPDATE|ALTER|DROP|ADD|DELETE' "$file"; then
+      #           echo "Detected UPDATE or ALTER or DELETE or DROP OR ADD command in $file"
+      #           commands_found=true
+      #           message+="Detected UPDATE, ALTER, DELETE, DROP, or ADD in $file\n"
+      #         fi
+      #       fi
+      #     done < changed_files.txt
+
+      #     # Writing output to environment file instead of using deprecated set-output
+      #     echo "commands_found=$commands_found" >> $GITHUB_ENV
+      #     echo "alert_message=$message" >> $GITHUB_ENV
+      # - name: Exit early if no commands found
+      #   if: ${{ env.commands_found == 'false' }}
+      #   run: |
+      #     echo "No UPDATE, ALTER, DELETE, DROP, or ADD commands detected. Exiting."
+      #     exit 0
+
+
+      # - name: Create GitHub Issue
+      #   if: ${{ env.commands_found == 'true' }}  
+      #   uses: octokit/request-action@v2.x
+      #   with:
+      #     route: POST /repos/bhargavreddy17/sqltest/issues
+      #     owner: bhargavreddy17
+      #     repo: sqltest
+      #     title: "Notification to Team"
+      #     body: |
+      #       "This issue is to notify the team about the recent changes:
+
+      #       - **PR Title**: ${{ github.event.pull_request.title }}
+      #       - **PR URL**: ${{ github.event.pull_request.html_url }}
+      #       - **PR Number**: #${{github.event.pull_request.number }}
+      #       - **Detected SQL Commands**:
+      #         ${{ env.alert_message }}"
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
