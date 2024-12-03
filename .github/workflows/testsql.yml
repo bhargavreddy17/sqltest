@@ -1,4 +1,3 @@
-
 name: Check for ALTER or UPDATE commands in SQL files
 
 on:
@@ -32,23 +31,31 @@ jobs:
 
           # Get the diff for SQL files and filter added lines for specific commands
           git diff origin/${{ github.base_ref }}...origin/${{ github.head_ref }} -- '*.sql' > sql_changes.diff
-          
+
           # Debug: Log the diff output
           echo "==== SQL Changes Diff ===="
           cat sql_changes.diff
           echo "==========================="
 
-          #added_lines=$(grep -E '^\+' sql_changes.diff | grep -v '^\+\+\+' | grep -E 'UPDATE|ALTER|DROP|ADD|DELETE' || true)
-          added_lines=$(grep -E '^\+' sql_changes.diff | grep -v '^\+\+\+' | grep -E 'UPDATE|ALTER|DROP|ADD|DELETE' | sed '/^\s*$/d' || true)
+          # Extract added lines and filter for SQL commands
+          added_lines=$(grep -E '^\+' sql_changes.diff | grep -v '^\+\+\+' | sed '/^\s*$/d' || true)
 
           # Debug: Log the extracted added lines
-          echo "==== Added Lines ===="
+          echo "==== Added Lines (Raw) ===="
           echo "$added_lines"
-          echo "====================="
+          echo "==========================="
 
-          if [[ -n "$added_lines" ]]; then
+          # Normalize lines and check for SQL commands (case-insensitive)
+          sql_commands=$(echo "$added_lines" | grep -Ei 'UPDATE|ALTER|DROP|ADD|DELETE' || true)
+
+          # Debug: Log matching SQL commands
+          echo "==== Matching SQL Commands ===="
+          echo "$sql_commands"
+          echo "==============================="
+
+          if [[ -n "$sql_commands" ]]; then
             commands_found=true
-            message="Detected SQL commands in changed lines:\n$added_lines"
+            message="Detected SQL commands in changed lines:\n$sql_commands"
           else
             message="No impactful SQL commands detected."
           fi
@@ -68,7 +75,7 @@ jobs:
           exit 0
 
       - name: Create GitHub Issue
-        if: ${{ env.commands_found == 'true' }}  
+        if: ${{ env.commands_found == 'true' }}
         uses: octokit/request-action@v2.x
         with:
           route: POST /repos/bhargavreddy17/sqltest/issues
@@ -76,58 +83,12 @@ jobs:
           repo: sqltest
           title: "Notification to Team"
           body: |
-            "This issue is to notify the team about the recent changes:
+            This issue is to notify the team about the recent changes:
 
             - **PR Title**: ${{ github.event.pull_request.title }}
             - **PR URL**: ${{ github.event.pull_request.html_url }}
-            - **PR Number**: #${{github.event.pull_request.number }}
+            - **PR Number**: #${{ github.event.pull_request.number }}
             - **Detected SQL Commands**:
-              ${{ env.alert_message }}."
+              ${{ env.alert_message }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
-      # - name: Check for ALTER or UPDATE or DROP or ADD commands in SQL files
-      #   id: check_sql
-      #   run: |
-      #     commands_found=false
-      #     message=""
-      #     while IFS= read -r file; do
-      #       if [[ "$file" == *.sql ]]; then
-      #         echo "Checking file: $file"
-      #         if grep -q -E 'UPDATE|ALTER|DROP|ADD|DELETE' "$file"; then
-      #           echo "Detected UPDATE or ALTER or DELETE or DROP OR ADD command in $file"
-      #           commands_found=true
-      #           message+="Detected UPDATE, ALTER, DELETE, DROP, or ADD in $file\n"
-      #         fi
-      #       fi
-      #     done < changed_files.txt
-
-      #     # Writing output to environment file instead of using deprecated set-output
-      #     echo "commands_found=$commands_found" >> $GITHUB_ENV
-      #     echo "alert_message=$message" >> $GITHUB_ENV
-      # - name: Exit early if no commands found
-      #   if: ${{ env.commands_found == 'false' }}
-      #   run: |
-      #     echo "No UPDATE, ALTER, DELETE, DROP, or ADD commands detected. Exiting."
-      #     exit 0
-
-
-      # - name: Create GitHub Issue
-      #   if: ${{ env.commands_found == 'true' }}  
-      #   uses: octokit/request-action@v2.x
-      #   with:
-      #     route: POST /repos/bhargavreddy17/sqltest/issues
-      #     owner: bhargavreddy17
-      #     repo: sqltest
-      #     title: "Notification to Team"
-      #     body: |
-      #       "This issue is to notify the team about the recent changes:
-
-      #       - **PR Title**: ${{ github.event.pull_request.title }}
-      #       - **PR URL**: ${{ github.event.pull_request.html_url }}
-      #       - **PR Number**: #${{github.event.pull_request.number }}
-      #       - **Detected SQL Commands**:
-      #         ${{ env.alert_message }}"
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
