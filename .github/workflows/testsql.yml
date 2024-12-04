@@ -22,7 +22,7 @@ jobs:
           echo "Comparing branches: ${GITHUB_BASE_REF}...${GITHUB_HEAD_REF}"
           # Get the diff for .sql files and filter added/modified lines
           git diff origin/${{ github.base_ref }}...origin/${{ github.head_ref }} -- '*.sql' \
-            | grep -E '^\+|^\-' | grep -vE '^\+\+\+|^\-\-\-' > sql_changes.txt
+            | grep -E '^\+|^\-' | grep -vE '^\+\+\+' > sql_changes.txt
           cat sql_changes.txt
 
       - name: Check for SQL commands in changes
