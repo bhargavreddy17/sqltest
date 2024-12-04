@@ -50,19 +50,20 @@ jobs:
           exit 0
 
       - name: Create GitHub Issue
-        if: ${{ env.commands_found == 'true' }}
+        if: ${{ env.commands_found == 'true' }}  
         uses: octokit/request-action@v2.x
         with:
-          route: POST /repos/${{ github.repository }}/issues
-          owner: ${{ github.repository_owner }}
-          repo: ${{ github.event.repository.name }}
-          title: "SQL Commands Detected in PR"
+          route: POST /repos/bhargavreddy17/sqltest/issues
+          owner: bhargavreddy17
+          repo: sqltest
+          title: "Notification to Team"
           body: |
-            **SQL Commands Found in PR**
-            - PR Title: ${{ github.event.pull_request.title }}
-            - PR URL: ${{ github.event.pull_request.html_url }}
-            - PR Number: #${{ github.event.pull_request.number }}
-            - **Detected Commands**:
-              ${{ env.alert_message }}
+            "This issue is to notify the team about the recent changes:
+
+            - **PR Title**: ${{ github.event.pull_request.title }}
+            - **PR URL**: ${{ github.event.pull_request.html_url }}
+            - **PR Number**: #${{github.event.pull_request.number }}
+            - **Detected SQL Commands**:
+              ${{ env.alert_message }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
