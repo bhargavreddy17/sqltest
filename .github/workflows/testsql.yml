@@ -1,11 +1,10 @@
-
-name: Check for ALTER TABLE/DROP TABLE/UPDATE/ADD CONSTRAINT commands in SQL files
+name: Check for SQL Commands in PR
 
 on:
   pull_request:
     paths:
       - '**/*.sql'
-    types: [opened, Review Requested, synchronize, reopened]
+    types: [opened, synchronize, reopened]
 
 jobs:
   check-sql-commands:
@@ -16,42 +15,39 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Fetch all branches
-        run: |
-          git fetch --all
+        run: git fetch --all
 
-      - name: Get list of changed SQL files
+      - name: Get SQL file changes in PR
         run: |
           echo "Comparing branches: ${GITHUB_BASE_REF}...${GITHUB_HEAD_REF}"
-          #git diff --name-only origin/${{ github.base_ref }}...origin/${{ github.head_ref }} > changed_files.txt
-          git diff origin/${{ github.base_ref }}...origin/${{ github.head_ref }} | grep -E '^\+|^\-' | grep -vE '^\+\+\+|^\-\-\-' > changed_files.txt
+          # Get the diff for .sql files and filter added/modified lines
+          git diff origin/${{ github.base_ref }}...origin/${{ github.head_ref }} -- '*.sql' \
+            | grep -E '^\+|^\-' | grep -vE '^\+\+\+|^\-\-\-' > sql_changes.txt
+          cat sql_changes.txt
 
-          cat changed_files.txt
-
-      - name: Check for ALTER TABLE/DROP TABLE/UPDATE/ADD CONSTRAINT commands in SQL files
+      - name: Check for SQL commands in changes
         id: check_sql
         run: |
           commands_found=false
           message=""
-          while IFS= read -r file; do
-            if [[ "$file" == *.sql ]]; then
-              echo "Checking file: $file"
-              if grep -q -E 'UPDATE|ALTER|DROP|ADD|DELETE' "$file"; then
-                echo "Detected UPDATE or ALTER or DELETE or DROP OR ADD command in $file"
-                commands_found=true
-                message+="Detected UPDATE, ALTER, DELETE, DROP, or ADD in $file\n"
-              fi
-            fi
-          done < changed_files.txt
 
-          
+          while IFS= read -r line; do
+            # Check if added/modified lines contain SQL commands
+            if echo "$line" | grep -q -E 'ADD|UPDATE|DELETE|DROP'; then
+              echo "Detected SQL command in PR: $line"
+              commands_found=true
+              message+="Detected SQL command in PR: $line\n"
+            fi
+          done < sql_changes.txt
+
           echo "commands_found=$commands_found" >> $GITHUB_ENV
           echo "alert_message=$message" >> $GITHUB_ENV
-      - name: Exit early if no commands found
+
+      - name: Exit early if no SQL commands found
         if: ${{ env.commands_found == 'false' }}
         run: |
-          echo "No UPDATE, ALTER, DELETE, DROP, or ADD commands detected. Exiting."
+          echo "No SQL commands detected in PR. Exiting."
           exit 0
-
 
       - name: Create GitHub Issue
         if: ${{ env.commands_found == 'true' }}  
@@ -65,10 +61,8 @@ jobs:
             "This issue is to notify the team about the recent changes:
 
             - **PR Title**: ${{ github.event.pull_request.title }}
-            - **PR URL**: ${{ github.event.pull_request.html_url }}
             - **PR Number**: #${{github.event.pull_request.number }}
             - **Detected SQL Commands**:
               ${{ env.alert_message }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
- 
