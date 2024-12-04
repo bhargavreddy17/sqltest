@@ -1,0 +1,3 @@
+DELETE
+DROP
+ADD
