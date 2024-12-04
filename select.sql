@@ -5,5 +5,3 @@ SELECT
 delete
 ALTER
 
-DELETE
-UPDATE
