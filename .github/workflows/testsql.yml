@@ -5,7 +5,7 @@ on:
   pull_request:
     paths:
       - '**/*.sql'
-    types: [opened, Review Requested, reopened]
+    types: [opened, Review Requested, synchronize, reopened]
 
 jobs:
   check-sql-commands:
@@ -57,7 +57,7 @@ jobs:
         if: ${{ env.commands_found == 'true' }}  
         uses: octokit/request-action@v2.x
         with:
-          route: POST /repos/collectivehealth/sqltest/issues
+          route: POST /repos/bhargavreddy17/sqltest/issues
           owner: bhargavreddy17
           repo: sqltest
           title: "Notification to Team"
