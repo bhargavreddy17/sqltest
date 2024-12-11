@@ -33,7 +33,7 @@ jobs:
 
           while IFS= read -r line; do
             # Check if added/modified lines contain SQL commands
-            if echo "$line" | grep -q -E 'ADD|UPDATE|DELETE|DROP'; then
+            if echo "$line" | grep -q -i-E 'ADD|UPDATE|DELETE|DROP'; then
               echo "Detected SQL command in PR: $line"
               commands_found=true
               message+="Detected SQL command in PR: $line\n"
