@@ -7,4 +7,6 @@ ALTER
 SELECT *FROM EMPLOYEE TABLE
 SELECT
 delete
+
+
    
