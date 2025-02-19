@@ -3,8 +3,9 @@ steps:
     key: "check-build-source"
     command:
       - echo "Build source"
-    if: build.source == "schedule"
+    
     notify:
       - slack: '#all-rgt-devops'
-        # if: build.source != "ui"
+        if: build.source != "webhook"
         message: "Scheduled build started"
+
