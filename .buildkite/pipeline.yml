@@ -3,7 +3,8 @@ steps:
     key: "check-build-source"
     command:
       - echo "Build source"
+    if: build.source == "schedule"
     notify:
       - slack: '#all-rgt-devops'
-        if: build.source == "schedule"
+        # if: build.source != "ui"
         message: "Scheduled build started"
