@@ -1,0 +1,18 @@
+name: Test PR Merge Trigger
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  test-merged-pr:
+    # Run only if the push was a result of a PR merge
+    if: startsWith(github.event.head_commit.message, 'Merge pull request')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Say Hello
+        run: echo "✅ This workflow ran because a PR was merged into 'main' branch!"
+
+      - name: Show commit message
+        run: echo "Commit message"
